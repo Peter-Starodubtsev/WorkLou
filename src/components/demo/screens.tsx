@@ -373,7 +373,9 @@ export function Clients({
         title={plans ? "Client plans" : "My clients"}
         sub={`${state.clients.length} open · ${state.clients.filter((c) => c.overdue).length} overdue · ${state.clients.filter((c) => c.waiting).length} waiting on a service`}
       >
-        <Button onClick={() => modal({ type: "new" })}>Add a new person</Button>
+        <Button icon="plus" onClick={() => modal({ type: "new" })}>
+          Add a new person
+        </Button>
       </Heading>
       <WorkQueues onReview={setReviewId} mine plans={plans} />
       <h2 id="client-table" className="dashboard-table-heading">
@@ -476,15 +478,21 @@ export function Profile({ c }: { c: Client }) {
         <div className="demo-profile-actions">
           <div>
             <Button
+              icon="shield"
               tone="orange-button"
               onClick={() => go(clientPath(c.id, "quick-exit"))}
             >
               Quick exit plan
             </Button>
-            <Button tone="dark" onClick={() => go(`${clientPath(c.id)}?ask=1`)}>
+            <Button
+              icon="chat"
+              tone="dark"
+              onClick={() => go(`${clientPath(c.id)}?ask=1`)}
+            >
               Ask about {firstName(c)}
             </Button>
             <Button
+              icon="plus"
               tone="green"
               onClick={() => modal({ type: "note", clientId: c.id })}
             >
@@ -493,11 +501,13 @@ export function Profile({ c }: { c: Client }) {
           </div>
           <div>
             <TextButton
+              icon="edit"
               onClick={() => modal({ type: "edit-client", clientId: c.id })}
             >
               Edit information
             </TextButton>
             <TextButton
+              icon="file"
               onClick={() => modal({ type: "letter", clientId: c.id })}
             >
               Support letter
@@ -722,7 +732,12 @@ export function Plan({ c }: { c: Client }) {
                 placeholder="e.g. Children at school in Ashfield"
                 onChange={(e) => setSuggestion(e.target.value)}
               />
-              <Button type="submit" tone="dark" disabled={!suggestion.trim()}>
+              <Button
+                icon="plus"
+                type="submit"
+                tone="dark"
+                disabled={!suggestion.trim()}
+              >
                 Add
               </Button>
             </form>
@@ -732,6 +747,7 @@ export function Plan({ c }: { c: Client }) {
             title={`Reviewed with ${firstName(c)}`}
             action={
               <TextButton
+                icon="plus"
                 onClick={() => modal({ type: "review", clientId: c.id })}
               >
                 Add a review
@@ -748,6 +764,7 @@ export function Plan({ c }: { c: Client }) {
             <Sheet title="Safety plan" note="Suggested · not in the plan yet">
               <div className="demo-actions">
                 <Button
+                  icon="plus"
                   onClick={() =>
                     addAction("Review safety plan together", "safety")
                   }
@@ -851,7 +868,12 @@ export function Plan({ c }: { c: Client }) {
                 onChange={(e) => setAction(e.target.value)}
                 placeholder={`Talk it through · e.g. ${firstName(c)} wants to keep night shifts`}
               />
-              <Button type="submit" tone="dark" disabled={!action.trim()}>
+              <Button
+                icon="plus"
+                type="submit"
+                tone="dark"
+                disabled={!action.trim()}
+              >
                 Add to plan
               </Button>
             </div>
@@ -895,6 +917,7 @@ export function Files({ c, kind }: { c?: Client; kind: "letters" | "notes" }) {
       >
         {c && (
           <Button
+            icon="plus"
             tone={kind === "notes" ? "green" : "dark"}
             onClick={() =>
               modal({

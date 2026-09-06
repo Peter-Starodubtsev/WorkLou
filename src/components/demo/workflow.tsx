@@ -374,7 +374,7 @@ export function Shelters({ c }: { c?: Client }) {
               placeholder="Type its name"
               aria-label="New service name"
             />
-            <Button type="submit" disabled={!service.trim()}>
+            <Button icon="plus" type="submit" disabled={!service.trim()}>
               Add
             </Button>
           </form>
@@ -742,6 +742,7 @@ export function Done({ c }: { c: Client }) {
       </div>
       <div className="demo-actions demo-done-actions">
         <Button
+          icon="calendar"
           tone="dark"
           disabled={!c.best}
           onClick={() => modal({ type: "callback", clientId: c.id })}
@@ -750,6 +751,7 @@ export function Done({ c }: { c: Client }) {
         </Button>
         {c.callback && c.best && (
           <Button
+            icon="plus"
             onClick={() => {
               const service = state.shelters.find((s) => s.id === c.best);
               if (!service || !downloadCalendar(c, service))
@@ -762,6 +764,7 @@ export function Done({ c }: { c: Client }) {
           </Button>
         )}
         <Button
+          icon="plus"
           onClick={() => {
             options.forEach((s) =>
               dispatch({

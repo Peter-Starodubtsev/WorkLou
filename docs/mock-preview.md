@@ -35,7 +35,7 @@ Send and callback controls record **simulated** events. They do not contact serv
 - **Draft review:** a deterministic local checklist available beside follow-up, working and letter drafts. It is not a live AI or provider verification. Letter send simulation requires explicit review confirmation.
 - **States:** all twenty control families represented across rest/hover/pressed/focus/disabled, using shared controls and real inputs/switches where applicable. This is a state review page, not another casework destination.
 
-The unified Today entry and separate client/task fields are consecutive states of one composer, combining the Today search, two-bars and long-ask references. Intake, standalone notes/letters and follow-up pages extend the shared visual system because the Claude page has no dedicated frames for those full flows. Existing glossy surfaces are deliberately retained; New case note is green per the user's correction. This is not a claim of pixel-identical reproduction of every desktop frame.
+The unified Today entry and separate client/task fields are consecutive states of one composer, combining the Today search, two-bars and long-ask references. Intake, standalone notes/letters and follow-up pages extend the shared visual system because the Claude page has no dedicated frames for those full flows. Add and selected profile actions use compact 16px outline icons, a 5px text gap and no icon-container padding. Existing glossy surfaces are deliberately retained; New case note is green per the user's correction. This is not a claim of pixel-identical reproduction of every desktop frame.
 
 ## Manual test path
 

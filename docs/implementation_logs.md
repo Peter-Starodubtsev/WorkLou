@@ -17,6 +17,14 @@ Append-only. New entries at the TOP (below this header block). Never edit or del
 
 ---
 
+## 2026-09-06 — Compact action icons
+- Branch: `codex/figma-claude-review`; fork-only follow-up.
+- Changes: shared 16px outline icons on add-person, notes, reviews, suggestions, plans, services, profile actions and calendar/print controls. No padding around the SVG; 5px icon/text gap and reduced 8px × 12px padding on these buttons. Existing colours and glossy surfaces retained.
+- DB changes: none.
+- Tests run: TypeScript and whitespace checks; live Chrome verified compact Add a new person rendering; local profile HTTP 200.
+- Result: pass. Review My clients, a profile and Plan locally. No new workflow behavior.
+- Next phase: user visual review; no main merge or deployment.
+
 ## 2026-09-06 — Selective mock UI review refinements
 - Branch: `codex/figma-claude-review`; fork-only push, no main merge or deployment.
 - Changes: kept glossy surfaces and top navigation; in-place Today review and saved follow-up drafts; compact client queue cards above the existing table; adjacent coloured profile actions and editable client information; dedicated editable quick-exit checklist; subtle shelter tags and inline whole-row/card details; explicit shortlist confirmation; callback calendar download; local draft-review checklist and letter approval gate; compact alert rows and corrected destinations.

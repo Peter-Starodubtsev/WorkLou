@@ -48,10 +48,15 @@ export function QuickExitPage({ c }: { c: Client }) {
               she is comfortable with.
             </p>
             <div className="demo-actions">
-              <Button onClick={() => modal({ type: "review", clientId: c.id })}>
+              <Button
+                icon="plus"
+                onClick={() => modal({ type: "review", clientId: c.id })}
+              >
                 Record a review
               </Button>
-              <Button onClick={() => window.print()}>Print to PDF</Button>
+              <Button icon="print" onClick={() => window.print()}>
+                Print to PDF
+              </Button>
             </div>
           </Sheet>
           <Sheet title="Share only when agreed">

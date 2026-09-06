@@ -119,6 +119,7 @@ export function Composer({
                         Open profile
                       </Button>
                       <Button
+                        icon="chat"
                         tone="dark"
                         onClick={() => {
                           choose(match.id);
@@ -129,6 +130,7 @@ export function Composer({
                         Ask about {firstName(match)}
                       </Button>
                       <Button
+                        icon="plus"
                         tone="green"
                         onClick={() =>
                           modal({ type: "note", clientId: match.id })
@@ -645,6 +647,7 @@ export function Modals({
           </label>
           <div className="demo-actions">
             <Button
+              icon="plus"
               type="submit"
               tone="green"
               disabled={!name.trim() || !focus.trim()}
@@ -806,7 +809,9 @@ export function Modals({
           <Button tone="dark" onClick={() => go(clientPath(c.id, "plan"))}>
             Open the plan
           </Button>
-          <Button onClick={() => window.print()}>Print to PDF</Button>
+          <Button icon="print" onClick={() => window.print()}>
+            Print to PDF
+          </Button>
           <Button
             onClick={() => {
               dispatch({
