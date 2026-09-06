@@ -18,6 +18,7 @@ Append-only. New entries at the TOP (below this header block). Never edit or del
 ---
 
 ## 2026-09-06 — Figma Claude UI/UX audit
+- Fork handoff: user clarified that pushes must go to a true GitHub fork. Created `Peter-Starodubtsev/WorkLou`; the review branch now targets remote `fork`. No main push or merge. The earlier upstream audit feature branch remains unmerged.
 - Branch: `codex/figma-claude-review`; isolated worktree created from latest fetched main and fast-forwarded to local preview `f97d2b6`.
 - Changes: reviewed all 17 Claude frames via Figma metadata, individual design context and screenshots; captured nested section/text/style inventory; wrote prioritized source-backed UI/UX audit and manual review steps. Updated visual direction to preserve the user-requested glossy style. No application code changes.
 - Environment: renewed Figma OAuth and set local startup/tool timeouts to 90/180 seconds. Resource discovery, metadata and all 17 frame requests then succeeded. Credentials/config are not committed.

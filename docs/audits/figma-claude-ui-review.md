@@ -2,6 +2,8 @@
 
 Status: audit ready for review; UI implementation has not started.
 
+Push destination: [Peter-Starodubtsev/WorkLou](https://github.com/Peter-Starodubtsev/WorkLou), a GitHub fork of sz-747/WorkLou, branch `codex/figma-claude-review`. The review branch uses remote `fork` for tracking and pushing. Do not push or merge into main. An earlier audit commit was pushed to the same-named feature branch in the upstream repository before the user's explicit fork clarification; that branch was not merged.
+
 ## Scope and evidence
 
 Reference: [Lou’s Place / Claude](https://www.figma.com/design/7cmuQrKGi1R0VfBchTfuqZ/Lou-s-Place-%E2%80%94-Website-Concepts?node-id=118-2). All 17 top-level frames on this page were retrieved with Figma MCP design context and their returned screenshots inspected. This does not include other pages in the Figma file.
@@ -11,6 +13,8 @@ Code baseline: `f97d2b6747c40f9a7b9e646c65d45dee1d406c6f`, the current glossy lo
 Evidence includes [raw page metadata](figma-claude-metadata.xml), [frame/section/text/style inventory](figma-claude-inventory.json), current component/page source, and browser spot checks of Today and People. The inventory preserves nested section names and design copy for follow-up work. Screenshots were inspected through MCP, not committed as local artifacts. This is a screen-and-source audit, not a pixel-diff certification or an exhaustive browser interaction test.
 
 Figma OAuth was renewed. Local MCP startup/tool budgets are now 90/180 seconds. Resource discovery, page metadata, and all 17 individual design-context calls succeeded after reconnecting. Small frame requests avoid one oversized page request. This reduces timeout exposure; it cannot guarantee external service availability. Local MCP configuration and OAuth credentials are not repository files.
+
+Remote verification after the audit push found that main advanced independently to `9854026` (Remove admin interface, #2). This review remains tied to the stated preview baseline; reconcile that newer main change before UI implementation. The original remote preview still points to `f97d2b6`.
 
 ## Priority definitions
 
