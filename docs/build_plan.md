@@ -47,6 +47,8 @@ Branch `codex/local-preview` integrates the latest existing glossy UI (`backend-
 
 ## Figma Claude alignment review — IN PROGRESS (2026-09-06)
 
+Implementation update: the user authorized connected mock data for all Claude UI flows. The fork now includes an opt-in mock preview at `http://localhost:3001/today` (`npm run preview:mock`), with client-scoped pages and local persistence. See [mock preview instructions and acceptance steps](mock-preview.md). The audit below describes the original baseline; many functional findings are now addressed in the mock layer. Production backend integration and user acceptance remain separate from this review.
+
 Branch `codex/figma-claude-review` uses an isolated worktree, created from fetched main and fast-forwarded to the current local-preview baseline. All 17 Claude frames were inspected through Figma MCP and compared with source; Today and People received browser spot checks. The [audit](audits/figma-claude-ui-review.md) records functional gaps, section-by-section layout differences, state coverage and design decisions. Audit documentation is ready; UI implementation and user acceptance remain pending. Preserve the existing glossy style, use local previews, and do not deploy or merge this review automatically.
 
 ## Phase rules

@@ -2,6 +2,8 @@
 
 ## Stack
 
+Current UI review addition: `docs/mock-preview.md` describes the opt-in Claude mock layer. `WORKLOU_MOCK_PREVIEW=1` routes A2 URLs to a shared React preview with typed synthetic state and browser persistence; the existing Postgres routes remain the default without this flag. This layer is for local design/flow testing, not production data or shared multi-user persistence.
+
 - Next.js fullstack (App Router, React, API routes) — one app to run and demo.
 - Postgres via **Drizzle** (decided — lighter, closer to SQL, enough for this hackathon).
 - Docker compose in the dev environment: app + postgres.

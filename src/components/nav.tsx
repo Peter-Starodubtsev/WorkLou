@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
  */
 /** Routes that render the A2 design shell and supply their own chrome. */
 const A2_ROUTES = [
+  "/mock-preview",
   "/today",
   "/clients",
   "/shelters",

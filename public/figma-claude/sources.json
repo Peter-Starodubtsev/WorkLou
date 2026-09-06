@@ -1,0 +1,13 @@
+{
+  "backdrop": "https://www.figma.com/api/mcp/asset/2a45cf59-8f9f-47f9-869a-e88ad65d5f7c.svg",
+  "search": "https://www.figma.com/api/mcp/asset/69ed8857-40a5-4543-93d5-03ca0c8a692d.svg",
+  "return": "https://www.figma.com/api/mcp/asset/02e7d534-38d4-4b3d-93fc-ef28319be433.svg",
+  "ring": "https://www.figma.com/api/mcp/asset/b71a0c2c-7b6b-49ff-b490-9c5c822a495f.svg",
+  "spinner": "https://www.figma.com/api/mcp/asset/e180c81a-c6fe-4e6f-9a2e-b23c42e2ba0f.svg",
+  "logo": "https://www.figma.com/api/mcp/asset/9d5a6be8-c139-447b-a9fa-6592a4166cf0.svg",
+  "toggle-on": "https://www.figma.com/api/mcp/asset/b0ad57bb-3b62-441e-91e3-0e294f5b9277.svg",
+  "toggle-off": "https://www.figma.com/api/mcp/asset/5bfa5705-f48b-4ff9-8848-a6e834a7df9e.svg",
+  "check": "https://www.figma.com/api/mcp/asset/158dbb2b-c8a6-496f-88a0-55e5adb81ea5.svg",
+  "did": "https://www.figma.com/api/mcp/asset/5d2b0991-7271-42a4-8b27-b7689ade44a6.svg",
+  "did-not": "https://www.figma.com/api/mcp/asset/b42e3ad2-427e-4ddb-838f-54b8659cd34a.svg"
+}

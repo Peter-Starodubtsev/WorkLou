@@ -17,6 +17,14 @@ Append-only. New entries at the TOP (below this header block). Never edit or del
 
 ---
 
+## 2026-09-06 — Connected Claude mock UI implementation
+- Branch: `codex/figma-claude-review`, pushing only to `fork` (`Peter-Starodubtsev/WorkLou`). No merge or push to main.
+- Changes: opt-in mock preview on port 3001; shared persistent synthetic state; populated Today, functional client/service filters, case search and Spotlight, alerts, intake, client context tabs, profile, notes/letters, two-column plan, shelter directory/results, client-scoped Working/Done and explicit mock action gates. Soft-green New case note; orange Quick exit and dark primary actions over the existing glossy surfaces. Exact Figma SVG exports stored locally. See `docs/mock-preview.md` for frame mapping and manual steps.
+- DB changes: none. Mock browser data is separate from Postgres and the prior port-3000 preview.
+- Tests: 11 state/workflow checks; TypeScript; mock production build. Chrome verified note save → profile/files/alerts, activity reflow, Send → Done, confirmation and refresh persistence, shortlist → plan, filters, client correction and Jasmine-specific quick exit. Today/Profile/Plan/Working/Done visual checks. Complete mobile and all-control manual acceptance remain for user review.
+- Result: integrated mock UI ready for review, with local browser persistence; live message/provider integrations intentionally absent.
+- Next phase: user reviews this fork preview and supplies remaining UI refinements. No automatic deployment or merge.
+
 ## 2026-09-06 — Figma Claude UI/UX audit
 - Fork handoff: user clarified that pushes must go to a true GitHub fork. Created `Peter-Starodubtsev/WorkLou`; the review branch now targets remote `fork`. No main push or merge. The earlier upstream audit feature branch remains unmerged.
 - Branch: `codex/figma-claude-review`; isolated worktree created from latest fetched main and fast-forwarded to local preview `f97d2b6`.

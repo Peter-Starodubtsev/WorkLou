@@ -2,6 +2,8 @@
 
 Status: audit ready for review; UI implementation has not started.
 
+Follow-up: the user subsequently authorized a connected mock implementation. See [the mock preview](../mock-preview.md) for implemented flows and verification. This audit remains a historical record of the original `f97d2b6` baseline; its findings should not be read as the current mock preview status.
+
 Push destination: [Peter-Starodubtsev/WorkLou](https://github.com/Peter-Starodubtsev/WorkLou), a GitHub fork of sz-747/WorkLou, branch `codex/figma-claude-review`. The review branch uses remote `fork` for tracking and pushing. Do not push or merge into main. An earlier audit commit was pushed to the same-named feature branch in the upstream repository before the user's explicit fork clarification; that branch was not merged.
 
 ## Scope and evidence

@@ -16,11 +16,15 @@ export const metadata: Metadata = {
   description: "Referral navigation + documentation for caseworkers.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={instrumentSans.variable}>
       <body>
-        <Nav />
+        {process.env.WORKLOU_MOCK_PREVIEW !== "1" && <Nav />}
         {children}
       </body>
     </html>
