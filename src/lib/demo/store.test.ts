@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { callbackCalendar } from "../../components/demo/calendar";
 import {
   seedState,
   reducer,
@@ -171,5 +172,85 @@ test("ambiguous and punctuation-bearing names need a deliberate client choice", 
   });
   assert.doesNotThrow(() => inferClient(s, "Find housing for Maya"));
   assert.equal(inferClient(s, "LP-0400")?.id, "bracket");
+});
+test("editing client information is isolated and updates search", () => {
+  const seed = seedState();
+  const maya = seed.clients[0];
+  const next = reducer(seed, {
+    type: "edit-client",
+    clientId: maya.id,
+    changes: {
+      name: "Maya Jones",
+      focus: "Housing review",
+      summary: "Agreed details",
+      chips: ["Dog", "No curfew"],
+    },
+  });
+  assert.equal(searchClients(next, "Maya Jones")[0].id, "maya");
+  assert.equal(next.clients[0].summary, "Agreed details");
+  assert.deepEqual(next.clients[1], seed.clients[1]);
+});
+test("quick exit checklist saves per client and edited details need reconfirming", () => {
+  const seed = seedState(),
+    id = seed.clients[0].quick[0].id;
+  let next = reducer(seed, { type: "toggle-quick", clientId: "maya", id });
+  assert.equal(next.clients[0].quick[0].done, true);
+  next = reducer(next, {
+    type: "edit-quick",
+    clientId: "maya",
+    id,
+    detail: "Agreed safe place",
+  });
+  assert.equal(next.clients[0].quick[0].done, false);
+  assert.equal(next.clients[0].quick[0].detail, "Agreed safe place");
+  assert.deepEqual(next.clients[1].quick, seed.clients[1].quick);
+});
+test("callback retains an unambiguous time and exports a private mock reminder", () => {
+  let s = seedState();
+  s = reducer(s, { type: "choose", clientId: "maya", shelterId: "bridgewell" });
+  s = reducer(s, {
+    type: "callback",
+    clientId: "maya",
+    date: "7 Sep 14:00",
+    startsAt: "2026-09-07T04:00:00.000Z",
+  });
+  const ics = callbackCalendar(s.clients[0], s.shelters[1]);
+  assert.ok(ics);
+  assert.match(ics, /DTSTART:20260907T040000Z/);
+  assert.match(ics, /DTEND:20260907T043000Z/);
+  assert.match(ics, /CLASS:PRIVATE/);
+  assert.match(ics, /STATUS:TENTATIVE/);
+  assert.equal(ics.includes("ATTENDEE"), false);
+  assert.equal(
+    callbackCalendar({ ...s.clients[0], callbackAt: undefined }, s.shelters[1]),
+    null,
+  );
+});
+test("file alerts open the correct letters or referral section", () => {
+  let s = seedState();
+  s = reducer(s, {
+    type: "file",
+    clientId: "maya",
+    file: {
+      id: "letter-test",
+      title: "Letter",
+      body: "Draft",
+      kind: "letter",
+      date: "Now",
+    },
+  });
+  assert.equal(s.alerts[0].section, "letters");
+  s = reducer(s, {
+    type: "file",
+    clientId: "maya",
+    file: {
+      id: "message-test",
+      title: "Follow-up draft",
+      body: "Draft",
+      kind: "message",
+      date: "Now",
+    },
+  });
+  assert.equal(s.alerts[0].section, "referrals");
 });
 console.log(`${checks} workflow checks passed`);

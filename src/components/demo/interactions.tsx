@@ -1,5 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
+import { downloadCalendar } from "./calendar";
+import "./interactions.css";
 import Link from "next/link";
 import {
   clientPath,
@@ -389,6 +391,88 @@ export function Spotlight({ close }: { close: () => void }) {
     </Dialog>
   );
 }
+export function DraftReview({
+  client,
+  text,
+  title = "Draft",
+  onReviewed,
+}: {
+  client: Client;
+  text: string;
+  title?: string;
+  onReviewed?: () => void;
+}) {
+  const [snapshot, setSnapshot] = useState<string | null>(null);
+  const current = `${client.id}|${title}|${text}`;
+  const reviewed = snapshot === current;
+  const hasName = text.toLowerCase().includes(firstName(client).toLowerCase());
+  return (
+    <section className="demo-draft-review">
+      <div className="demo-review-heading">
+        <div>
+          <b>Another look before you save</b>
+          <small>Preview assistant review · local checklist, not live AI</small>
+        </div>
+        <Button
+          onClick={() => {
+            setSnapshot(current);
+            onReviewed?.();
+          }}
+        >
+          ✧ Check draft
+        </Button>
+      </div>
+      {snapshot !== null && (
+        <div aria-live="polite">
+          {!reviewed ? (
+            <p className="orange">
+              Draft changed. Check it again before relying on this review.
+            </p>
+          ) : (
+            <>
+              <p className="demo-label">
+                Checked against {client.name} · {client.ref}
+              </p>
+              <ul className="demo-review-checks">
+                <li>
+                  {text.trim()
+                    ? "✓ Draft has content."
+                    : "○ Add notes before saving."}
+                </li>
+                <li>
+                  {title.trim()
+                    ? "✓ File has a title."
+                    : "○ Add a clear title."}
+                </li>
+                <li>
+                  {hasName
+                    ? `✓ ${firstName(client)} is named in the draft.`
+                    : `○ Confirm this draft is about ${client.name}; the name is missing.`}
+                </li>
+                {/bed|vacan|availab|shelter|housing|book|capacity/i.test(
+                  text,
+                ) && (
+                  <li>
+                    ○ Service capacity is unconfirmed. Check directly before
+                    promising a place.
+                  </li>
+                )}
+                <li>
+                  ○ Review accuracy, agreed next steps and safe sharing with the
+                  client.
+                </li>
+              </ul>
+              <small>
+                These checks do not approve the content or contact anyone. You
+                decide what happens next.
+              </small>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
 export function Modals({
   value,
   close,
@@ -410,9 +494,24 @@ export function Modals({
       value.file?.title ||
         (value.type === "letter" ? "Support letter" : "Contact note"),
     ),
-    [name, setName] = useState(""),
-    [focus, setFocus] = useState(""),
-    [date, setDate] = useState("2026-09-07T14:00");
+    [name, setName] = useState(
+      value.type === "edit-client" ? c?.name || "" : "",
+    ),
+    [focus, setFocus] = useState(
+      value.type === "edit-client" ? c?.focus || "" : "",
+    ),
+    [summary, setSummary] = useState(c?.summary || ""),
+    [chips, setChips] = useState(c?.chips.join(", ") || ""),
+    [approved, setApproved] = useState(false),
+    [savedCallback, setSavedCallback] = useState(false),
+    [date, setDate] = useState(() => {
+      const next = new Date();
+      next.setDate(next.getDate() + 1);
+      next.setHours(14, 0, 0, 0);
+      return new Date(next.getTime() - next.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
+    });
   const stamp = () => new Date().toLocaleString("en-AU");
   function save(kind: "note" | "letter" | "message", existing?: RecordFile) {
     if (!c || !text.trim() || !title.trim()) return;
@@ -536,7 +635,10 @@ export function Modals({
             First conversation
             <textarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                setApproved(false);
+              }}
               rows={4}
               placeholder="Notes in their own words"
             />
@@ -608,6 +710,85 @@ export function Modals({
         <Button onClick={() => go("/clients")}>My clients</Button>
       </Dialog>
     );
+  if (value.type === "edit-client")
+    return (
+      <Dialog title={`Edit ${firstName(c)}’s information`} onClose={close}>
+        <p>
+          Keep the summary and support needs up to date together. Changes stay
+          in this mock case.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!name.trim() || !focus.trim()) return;
+            dispatch({
+              type: "edit-client",
+              clientId: c.id,
+              changes: {
+                name: name.trim(),
+                focus: focus.trim(),
+                summary: summary.trim(),
+                chips: [
+                  ...new Set(
+                    chips
+                      .split(",")
+                      .map((x) => x.trim())
+                      .filter(Boolean),
+                  ),
+                ],
+              },
+            });
+            notify(
+              "Client information updated across the profile, search and My clients.",
+            );
+            close();
+          }}
+        >
+          <label>
+            Name
+            <input
+              autoFocus
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <label>
+            Current focus
+            <input
+              required
+              value={focus}
+              onChange={(e) => setFocus(e.target.value)}
+            />
+          </label>
+          <label>
+            Summary
+            <textarea
+              rows={5}
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+            />
+          </label>
+          <label>
+            Support tags
+            <input value={chips} onChange={(e) => setChips(e.target.value)} />
+            <small>
+              Separate tags with commas, for example: Housing, Dog, Safe phone
+            </small>
+          </label>
+          <div className="demo-actions">
+            <Button
+              tone="green"
+              type="submit"
+              disabled={!name.trim() || !focus.trim()}
+            >
+              Save changes
+            </Button>
+            <Button onClick={close}>Cancel</Button>
+          </div>
+        </form>
+      </Dialog>
+    );
   if (value.type === "quick")
     return (
       <Dialog title={`${firstName(c)}’s quick exit plan`} onClose={close}>
@@ -675,7 +856,10 @@ export function Modals({
               autoFocus
               required
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                setApproved(false);
+              }}
               rows={4}
             />
           </label>
@@ -685,6 +869,40 @@ export function Modals({
         </form>
       </Dialog>
     );
+  if (value.type === "callback" && savedCallback) {
+    const shelter = state.shelters.find((s) => s.id === c.best);
+    return (
+      <Dialog title="Callback ready in your plan" onClose={close}>
+        <div className="demo-review-success" role="status">
+          <b>✓ Mock callback saved</b>
+          <p>
+            {c.name} · {shelter?.name}
+            <br />
+            {c.callback}
+          </p>
+        </div>
+        <p>
+          Next: confirm the time with the service. No invitation or booking has
+          been sent.
+        </p>
+        <div className="demo-actions">
+          {shelter && (
+            <Button tone="green" onClick={() => downloadCalendar(c, shelter)}>
+              Download calendar event
+            </Button>
+          )}
+          <Button onClick={() => go(clientPath(c.id, "referrals"))}>
+            View referrals
+          </Button>
+          <Button onClick={close}>Done</Button>
+        </div>
+        <small>
+          Downloads a private .ics reminder for your calendar. It does not sync
+          automatically.
+        </small>
+      </Dialog>
+    );
+  }
   if (value.type === "callback")
     return (
       <Dialog title={`Book a callback for ${firstName(c)}`} onClose={close}>
@@ -701,11 +919,12 @@ export function Modals({
               type: "callback",
               clientId: c.id,
               date: new Date(date).toLocaleString("en-AU"),
+              startsAt: new Date(date).toISOString(),
             });
             notify(
               "Mock callback saved. Today, referrals and the paper trail are updated.",
             );
-            close();
+            setSavedCallback(true);
           }}
         >
           <label>
@@ -751,21 +970,41 @@ export function Modals({
             autoFocus
             value={title}
             required
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setApproved(false);
+            }}
           />
         </label>
         <label>
           {value.type === "letter" ? "Review the draft" : "Notes"}
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              setApproved(false);
+            }}
             rows={10}
             required
             placeholder="What did the client say? What did you agree together?"
           />
         </label>
+        <DraftReview client={c} text={text} title={title} />
+        {(value.type === "letter" || value.file?.kind === "letter") && (
+          <label className="demo-review-approval">
+            <input
+              type="checkbox"
+              checked={approved}
+              onChange={(e) => setApproved(e.target.checked)}
+            />
+            <span>
+              I have reviewed the wording and what is appropriate to share with{" "}
+              {firstName(c)}.
+            </span>
+          </label>
+        )}
         <small>
-          Saved only to {c.name}’s mock file · review before any real sharing
+          Saved only to {c.name}’s mock file · nothing is transmitted
         </small>
         <div className="demo-actions">
           <Button
@@ -775,6 +1014,39 @@ export function Modals({
           >
             Save {value.type === "note" ? "case note" : "draft"}
           </Button>
+          {(value.type === "letter" || value.file?.kind === "letter") && (
+            <Button
+              tone="green"
+              disabled={!approved || !text.trim() || !title.trim()}
+              onClick={() => {
+                const file = {
+                  id: value.file?.id || crypto.randomUUID(),
+                  title: title.trim(),
+                  body: text.trim(),
+                  kind: "letter" as const,
+                  date: stamp(),
+                };
+                dispatch({ type: "file", clientId: c.id, file });
+                dispatch({
+                  type: "file",
+                  clientId: c.id,
+                  file: {
+                    id: crypto.randomUUID(),
+                    title: `${title.trim()} · simulated send`,
+                    body: `SIMULATED SEND — nothing transmitted. Reviewed by Hannah.\n\n${text.trim()}`,
+                    kind: "message",
+                    date: stamp(),
+                  },
+                });
+                notify(
+                  "Reviewed letter saved and simulated send recorded. Nothing transmitted. Next: check the client's follow-up plan.",
+                );
+                close();
+              }}
+            >
+              Save &amp; simulate send
+            </Button>
+          )}
           <Button onClick={close}>Cancel</Button>
         </div>
       </form>

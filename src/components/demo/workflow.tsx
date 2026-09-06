@@ -1,12 +1,114 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Sheet } from "../a2/Sheet";
-import { WORKING } from "../../lib/a2-mock";
+import "./workflow-cards.css";
+import { downloadCalendar } from "./calendar";
+import { DraftReview } from "./interactions";
 import { clientPath, firstName, eligibility } from "../../lib/demo/store";
 import type { Client, Shelter } from "../../lib/demo/store";
 import { useDemo } from "./context";
 import { Asset, Button, TextButton, Heading, Rail } from "./ui";
+function PawIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <ellipse cx="5" cy="6" rx="2" ry="3" />
+      <ellipse cx="10" cy="4" rx="2" ry="3" />
+      <ellipse cx="15" cy="6" rx="2" ry="3" />
+      <path d="M4 14c0-3 3-5 6-5s6 2 6 5c0 4-4 2-6 2s-6 2-6-2" />
+    </svg>
+  );
+}
+function ShelterTags({ s }: { s: Shelter }) {
+  return (
+    <span className="workflow-tags">
+      <span>
+        <i aria-hidden="true">♀</i>
+        {s.children ? "Women + children" : "Women"}
+      </span>
+      <span className={s.pets ? "positive" : "muted"}>
+        <PawIcon />
+        {s.pets ? "Pets welcome" : "No pets"}
+      </span>
+      <span>
+        <i aria-hidden="true">◷</i>
+        {s.noCurfew ? "No curfew" : "Curfew · check"}
+      </span>
+      <span>
+        <i aria-hidden="true">⌖</i>
+        {s.area}
+      </span>
+      <span className={s.beds ? "positive" : "muted"}>
+        <i aria-hidden="true">▱</i>
+        {s.beds === null
+          ? "Capacity unknown"
+          : `${s.beds} mock bed${s.beds === 1 ? "" : "s"}`}
+      </span>
+    </span>
+  );
+}
+function ShelterDetails({
+  s,
+  onClose,
+  children,
+}: {
+  s: Shelter;
+  onClose: () => void;
+  children?: ReactNode;
+}) {
+  const panel = useRef<HTMLElement>(null);
+  useEffect(() => {
+    panel.current?.scrollIntoView({ block: "nearest" });
+  }, [s.id]);
+  return (
+    <section
+      ref={panel}
+      className="a2s-sheet workflow-details"
+      id="shelter-expanded"
+      aria-label={`${s.name} details`}
+    >
+      <div className="demo-actions spread">
+        <h2>{s.name}</h2>
+        <TextButton onClick={onClose}>Close details</TextButton>
+      </div>
+      <ShelterTags s={s} />
+      <div className="workflow-detail-grid">
+        <div>
+          <h3>Who this service supports</h3>
+          <p>{s.takes}</p>
+          <p>
+            {s.nilIncome
+              ? "Nil income accepted"
+              : "Income requirements need checking"}
+          </p>
+        </div>
+        <div>
+          <h3>Capacity and location</h3>
+          <p>
+            {s.walk} minutes’ walk to the station · {s.area}
+          </p>
+          <p>{s.checked} · synthetic service information</p>
+        </div>
+        <div>
+          <h3>Before a referral</h3>
+          <p>
+            Review suitability with the client and confirm vacancy, contact
+            details and requirements with the service. A saved choice is not a
+            booking.
+          </p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
 export function Shelters({ c }: { c?: Client }) {
   const { state, modal, dispatch, notify, go } = useDemo(),
     [query, setQuery] = useState(
@@ -16,7 +118,9 @@ export function Shelters({ c }: { c?: Client }) {
     ),
     [ask, setAsk] = useState<string | null>(null),
     [filters, setFilters] = useState<string[]>([]),
-    [service, setService] = useState("");
+    [service, setService] = useState(""),
+    [expanded, setExpanded] = useState<string | null>(null);
+  const expandedShelter = state.shelters.find((s) => s.id === expanded);
   const toggle = (x: string) =>
     setFilters(
       filters.includes(x) ? filters.filter((f) => f !== x) : [...filters, x],
@@ -45,6 +149,12 @@ export function Shelters({ c }: { c?: Client }) {
   function choose(s: Shelter) {
     if (!c) {
       notify("Open a client’s Shelters tab to choose for that client.");
+      return;
+    }
+    if (!eligibility(s, ask ?? query).startsWith("Eligible")) {
+      notify(
+        "This service does not match the current requirements. Review the requirements before choosing.",
+      );
       return;
     }
     dispatch({ type: "choose", clientId: c.id, shelterId: s.id });
@@ -105,129 +215,142 @@ export function Shelters({ c }: { c?: Client }) {
           </TextButton>
         )}
       </div>
-      {ask !== null ? (
-        <>
-          <h2 className="demo-small-heading">
-            {matches.length} eligible{c ? ` for ${firstName(c)}` : ""}{" "}
-            <small>From your request · simulated service data</small>
-          </h2>
-          <div className="demo-three">
-            {matches.map((s) => (
-              <Sheet
-                key={s.id}
-                title={s.name}
-                action={
-                  <span className="demo-green">{eligibility(s, ask)}</span>
+      {expandedShelter && (
+        <ShelterDetails s={expandedShelter} onClose={() => setExpanded(null)}>
+          {c && (
+            <div className="demo-actions">
+              <Button
+                tone="dark"
+                disabled={
+                  !eligibility(expandedShelter, ask ?? query).startsWith(
+                    "Eligible",
+                  )
                 }
+                onClick={() => choose(expandedShelter)}
               >
-                <small>{s.area} · Inner West</small>
-                <dl className="demo-facts">
-                  <dt>Takes</dt>
-                  <dd>{s.takes}</dd>
-                  <dt>Beds</dt>
-                  <dd>
-                    {s.beds ?? "Unknown"} · {s.checked}
-                  </dd>
-                  <dt>Why</dt>
-                  <dd>
-                    {s.pets ? "Pets accepted · " : ""}
-                    {s.noCurfew ? "no curfew" : "curfew needs review"}
-                  </dd>
-                </dl>
-                <div className="demo-actions">
-                  <Button
-                    tone={c?.best === s.id ? "dark" : ""}
-                    onClick={() => choose(s)}
-                  >
-                    {c?.best === s.id ? "Selected" : "Choose"}
-                  </Button>
-                  <TextButton
-                    onClick={() =>
-                      modal({ type: "shelter", shelter: s, clientId: c?.id })
-                    }
-                  >
-                    Details
-                  </TextButton>
-                </div>
-              </Sheet>
-            ))}
-          </div>
-          <details className="a2s-sheet demo-spaced">
-            <summary>
-              {rows.length - matches.length} not eligible · see why
-            </summary>
-            {rows
-              .filter((s) => !matches.includes(s))
-              .map((s) => (
-                <p key={s.id}>
-                  {s.name} — {eligibility(s, ask)}
-                </p>
-              ))}
-          </details>
-        </>
-      ) : (
+                {c.best === expandedShelter.id
+                  ? "Confirmed choice"
+                  : `Confirm choice for ${firstName(c)}`}
+              </Button>
+              <Link href={clientPath(c.id, "plan")}>Review client plan</Link>
+              <small>{eligibility(expandedShelter, ask ?? query)}</small>
+            </div>
+          )}
+        </ShelterDetails>
+      )}
+      <h2 className="demo-small-heading">
+        {ask === null
+          ? `${rows.length} services`
+          : `${matches.length} eligible${c ? ` for ${firstName(c)}` : ""}`}{" "}
+        <small>Open a service to review · capacity is mock data</small>
+      </h2>
+      {ask === null ? (
         <Sheet>
           <div className="demo-table-scroll">
-            <table className="a2s-table">
+            <table className="a2s-table workflow-shelter-table">
               <thead>
                 <tr>
-                  {[
-                    "Shelter",
-                    "Area",
-                    "Takes",
-                    "Beds (how, when)",
-                    c ? `For ${firstName(c)}` : "Details",
-                  ].map((x) => (
-                    <th key={x}>{x}</th>
-                  ))}
+                  <th>Shelter</th>
+                  <th>Area</th>
+                  <th>Supports</th>
+                  <th>Beds (how, when)</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((s) => (
-                  <tr key={s.id}>
+                  <tr
+                    key={s.id}
+                    className={expanded === s.id ? "expanded" : ""}
+                    onClick={() => setExpanded(expanded === s.id ? null : s.id)}
+                  >
                     <td>
                       <TextButton
-                        onClick={() =>
-                          modal({
-                            type: "shelter",
-                            shelter: s,
-                            clientId: c?.id,
-                          })
-                        }
+                        aria-expanded={expanded === s.id}
+                        aria-controls="shelter-expanded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpanded(expanded === s.id ? null : s.id);
+                        }}
                       >
                         {s.name}
                       </TextButton>
                     </td>
                     <td>{s.area}</td>
-                    <td>{s.takes}</td>
                     <td>
-                      <b className={s.beds === null ? "orange" : ""}>
-                        {s.beds === null
-                          ? "unknown"
-                          : `${s.beds} bed${s.beds === 1 ? "" : "s"}`}
+                      <span className="workflow-tags">
+                        <span>Women{s.children ? " + children" : ""}</span>
+                        <span>
+                          <PawIcon />
+                          {s.pets ? "Pets welcome" : "No pets"}
+                        </span>
+                        <span>
+                          {s.noCurfew ? "◷ No curfew" : "Curfew · check"}
+                        </span>
+                      </span>
+                    </td>
+                    <td>
+                      <b>
+                        {s.beds === null ? "Unknown" : `${s.beds} mock beds`}
                       </b>
                       <small>{s.checked}</small>
                     </td>
-                    <td>
-                      {c ? (
-                        eligibility(s, query)
-                      ) : (
-                        <TextButton
-                          onClick={() => modal({ type: "shelter", shelter: s })}
-                        >
-                          Open
-                        </TextButton>
-                      )}
-                    </td>
+                    <td>{c ? eligibility(s, query) : "Review details ↗"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {!rows.length && (
-              <p className="demo-empty">No services match those filters.</p>
-            )}
           </div>
         </Sheet>
+      ) : (
+        <div className="demo-three workflow-shelter-grid">
+          {(ask === null ? rows : matches).map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={`a2s-sheet workflow-shelter-tile ${expanded === s.id ? "expanded" : ""}`}
+              aria-expanded={expanded === s.id}
+              aria-controls="shelter-expanded"
+              onClick={() => setExpanded(expanded === s.id ? null : s.id)}
+            >
+              <span className="workflow-tile-heading">
+                <strong>{s.name}</strong>
+                <span aria-hidden="true">{expanded === s.id ? "−" : "↗"}</span>
+              </span>
+              <ShelterTags s={s} />
+              <span className="workflow-service-copy">{s.takes}</span>
+              <span className="workflow-tile-footer">
+                <span>{ask !== null ? eligibility(s, ask) : s.checked}</span>
+                <span>
+                  {c?.best === s.id ? "✓ Confirmed choice" : "Review details"}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {!(ask === null ? rows : matches).length && (
+        <p className="demo-empty">
+          No services match those requirements. Adjust or clear filters to
+          review more services.
+        </p>
+      )}
+      {ask !== null && (
+        <details className="a2s-sheet demo-spaced">
+          <summary>
+            {rows.length - matches.length} not eligible · see why
+          </summary>
+          {rows
+            .filter((s) => !matches.includes(s))
+            .map((s) => (
+              <p key={s.id}>
+                <TextButton onClick={() => setExpanded(s.id)}>
+                  {s.name}
+                </TextButton>{" "}
+                — {eligibility(s, ask)}
+              </p>
+            ))}
+        </details>
       )}
       <div className="demo-three demo-spaced">
         <Sheet
@@ -394,6 +517,7 @@ export function Working({ c }: { c: Client }) {
               Edit before approving · simulated message saved to this client’s
               files
             </small>
+            <DraftReview client={c} text={draft} title="Check this message" />
             <div className="demo-actions">
               <Button
                 tone="dark"
@@ -468,7 +592,8 @@ export function Working({ c }: { c: Client }) {
 }
 export function Done({ c }: { c: Client }) {
   const { state, dispatch, modal, notify, go } = useDemo(),
-    [candidate, setCandidate] = useState<string | null>(null);
+    [candidate, setCandidate] = useState<string | null>(null),
+    [expanded, setExpanded] = useState<string | null>(null);
   const options = state.shelters.filter((s) =>
     ["harbour", "bridgewell", "cedar"].includes(s.id),
   );
@@ -491,19 +616,48 @@ export function Done({ c }: { c: Client }) {
         <b>{c.run.ask}</b>
         <small>Done · decision saved</small>
       </div>
+      <p className="workflow-next-step">
+        <b>
+          {c.best
+            ? "Next: review the choice with your client."
+            : "Ready for your review."}
+        </b>{" "}
+        {c.best
+          ? "Arrange a callback to confirm capacity, or add the options to the plan."
+          : "Select a whole card, inspect its details, then confirm your preferred option."}
+      </p>
+      {expanded && state.shelters.find((s) => s.id === expanded) && (
+        <ShelterDetails
+          s={state.shelters.find((s) => s.id === expanded)!}
+          onClose={() => setExpanded(null)}
+        />
+      )}
       <div className="demo-done-grid">
         {options.map((s, i) => (
           <section
             className={`a2s-sheet demo-option ${c.best === s.id ? "best" : ""} ${candidate === s.id ? "candidate" : ""}`}
             key={s.id}
           >
+            <button
+              type="button"
+              className="workflow-card-select"
+              aria-label={
+                c.best === s.id
+                  ? `${s.name}, current best fit`
+                  : `Select ${s.name} for review`
+              }
+              aria-pressed={candidate === s.id || c.best === s.id}
+              onClick={() => {
+                if (c.best !== s.id) setCandidate(s.id);
+              }}
+            />
             <div className="demo-option-top">
               <strong>{s.walk} min</strong>
               {c.best === s.id && <span className="a2s-badge">Locked in</span>}
             </div>
             <small>walk to the station</small>
             <h2>{s.name}</h2>
-            <small>{s.area}</small>
+            <ShelterTags s={s} />
             <p>{s.takes}</p>
             <p>
               {s.beds === null
@@ -516,11 +670,11 @@ export function Done({ c }: { c: Client }) {
               </small>
             )}
             <TextButton
-              onClick={() =>
-                modal({ type: "shelter", shelter: s, clientId: c.id })
-              }
+              aria-expanded={expanded === s.id}
+              aria-controls="shelter-expanded"
+              onClick={() => setExpanded(expanded === s.id ? null : s.id)}
             >
-              Shelter details
+              {expanded === s.id ? "Hide shelter details" : "Shelter details"}
             </TextButton>
             <div className="demo-option-actions">
               {candidate === s.id ? (
@@ -594,6 +748,19 @@ export function Done({ c }: { c: Client }) {
         >
           {c.callback ? "Edit mock callback" : "Book the callback"}
         </Button>
+        {c.callback && c.best && (
+          <Button
+            onClick={() => {
+              const service = state.shelters.find((s) => s.id === c.best);
+              if (!service || !downloadCalendar(c, service))
+                notify(
+                  "Edit the mock callback and choose a date and time before downloading.",
+                );
+            }}
+          >
+            Add callback to calendar
+          </Button>
+        )}
         <Button
           onClick={() => {
             options.forEach((s) =>
@@ -608,7 +775,9 @@ export function Done({ c }: { c: Client }) {
                 },
               }),
             );
-            notify("Three shelter options added to the client’s plan.");
+            notify(
+              "Three shelter options added. Next: open the plan and review them with the client.",
+            );
           }}
         >
           Add all three to {firstName(c)}’s plan

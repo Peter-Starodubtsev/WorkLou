@@ -17,6 +17,14 @@ Append-only. New entries at the TOP (below this header block). Never edit or del
 
 ---
 
+## 2026-09-06 — Selective mock UI review refinements
+- Branch: `codex/figma-claude-review`; fork-only push, no main merge or deployment.
+- Changes: kept glossy surfaces and top navigation; in-place Today review and saved follow-up drafts; compact client queue cards above the existing table; adjacent coloured profile actions and editable client information; dedicated editable quick-exit checklist; subtle shelter tags and inline whole-row/card details; explicit shortlist confirmation; callback calendar download; local draft-review checklist and letter approval gate; compact alert rows and corrected destinations.
+- DB changes: none. All actions use persistent synthetic browser data; sending and bookings remain simulated.
+- Tests run: 15 deterministic workflow checks, TypeScript, whitespace validation and an isolated production build with the mock flag. Chrome verified queue styling, expanded shelter details/tags, client quick-exit routing, in-place Today review and draft-save feedback.
+- Result: pass. Existing visual style preserved. Full responsive/manual acceptance remains for user review; draft checks are local rules and calendar export does not synchronize calendars.
+- Next phase: review at `http://localhost:3001/today`, using `docs/mock-preview.md`. Keep this work on the fork branch.
+
 ## 2026-09-06 — Connected Claude mock UI implementation
 - Branch: `codex/figma-claude-review`, pushing only to `fork` (`Peter-Starodubtsev/WorkLou`). No merge or push to main.
 - Changes: opt-in mock preview on port 3001; shared persistent synthetic state; populated Today, functional client/service filters, case search and Spotlight, alerts, intake, client context tabs, profile, notes/letters, two-column plan, shelter directory/results, client-scoped Working/Done and explicit mock action gates. Soft-green New case note; orange Quick exit and dark primary actions over the existing glossy surfaces. Exact Figma SVG exports stored locally. See `docs/mock-preview.md` for frame mapping and manual steps.

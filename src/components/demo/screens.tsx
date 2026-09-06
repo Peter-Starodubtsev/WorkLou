@@ -12,10 +12,20 @@ import {
 } from "../../lib/demo/store";
 import type { Client } from "../../lib/demo/store";
 import { useDemo } from "./context";
-import { Asset, Button, TextButton, Heading, QueueRow, Rail } from "./ui";
-import { Composer } from "./interactions";
+import {
+  Asset,
+  Button,
+  TextButton,
+  Heading,
+  QueueRow,
+  Rail,
+  Dialog,
+} from "./ui";
+import { Composer, DraftReview } from "./interactions";
+import "./dashboard.css";
 export function Today() {
-  const { state, go, modal } = useDemo(),
+  const { state, modal } = useDemo(),
+    [reviewId, setReviewId] = useState<string | null>(null),
     attention = state.clients.filter((c) => c.attention),
     running = state.clients.filter((c) => c.run?.status === "working"),
     letters = state.clients.flatMap((c) =>
@@ -31,18 +41,18 @@ export function Today() {
       <div className="a2s-grid">
         <Sheet title={`Needs attention · ${attention.length}`}>
           <ul className="demo-rows">
-            {attention.map((c, i) => (
+            {attention.map((c) => (
               <QueueRow
                 key={c.id}
                 title={c.name}
                 detail={
-                  i === 0
+                  c.id === "maya"
                     ? "Housing follow-up · Harbour House callback"
                     : c.focus
                 }
                 meta={c.overdue ? "Overdue" : c.next}
                 tone={c.overdue ? "orange" : ""}
-                href={clientPath(c.id, "referrals")}
+                onClick={() => setReviewId(c.id)}
               />
             ))}
           </ul>
@@ -76,7 +86,7 @@ export function Today() {
                   detail={c.focus}
                   meta={c.overdue ? "Overdue" : "Send follow-up"}
                   tone={c.overdue ? "orange" : ""}
-                  href={clientPath(c.id, "referrals")}
+                  onClick={() => setReviewId(c.id)}
                 />
               ))}
           </ul>
@@ -123,7 +133,223 @@ export function Today() {
           </Sheet>
         </aside>
       </div>
+      {reviewId && state.clients.find((c) => c.id === reviewId) && (
+        <AttentionReview
+          key={reviewId}
+          c={state.clients.find((c) => c.id === reviewId)!}
+          onClose={() => setReviewId(null)}
+        />
+      )}
     </>
+  );
+}
+function AttentionReview({ c, onClose }: { c: Client; onClose: () => void }) {
+  const { dispatch, notify } = useDemo();
+  const draftId = `follow-up-draft-${c.id}`;
+  const saved = c.files.find((f) => f.id === draftId);
+  const [draft, setDraft] = useState(
+    saved?.body ||
+      `Hello, I’m following up on ${c.name}’s request for ${c.focus.toLowerCase()}. Could you confirm the current status and the next step? Please let us know if you need anything further. Thank you, Hannah · Lou’s Place.`,
+  );
+  const [savedDraft, setSavedDraft] = useState(false);
+  const save = () => {
+    dispatch({
+      type: "file",
+      clientId: c.id,
+      file: {
+        id: draftId,
+        title: "Follow-up draft · for review",
+        kind: "message",
+        body: draft.trim(),
+        date: new Date().toLocaleDateString("en-AU"),
+      },
+    });
+    setSavedDraft(true);
+    notify("Follow-up draft saved. Nothing sent.");
+  };
+  return (
+    <Dialog title={`Review · ${c.name}`} onClose={onClose} wide>
+      <div className="dashboard-review-context">
+        <span className="dashboard-status">Ready for review</span>
+        <span>
+          {c.ref} · {c.stage}
+        </span>
+      </div>
+      <p>
+        {c.focus} · <b>{c.overdue ? "Overdue" : c.next}</b>
+      </p>
+      <p className="dashboard-review-hint">
+        A starter follow-up is ready. Check the recipient, consent and details
+        before using it. Stay here to review, or open the full client record.
+      </p>
+      <label className="dashboard-draft">
+        Follow-up draft
+        <textarea
+          rows={6}
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setSavedDraft(false);
+          }}
+        />
+      </label>
+      <div className="demo-actions">
+        <Button tone="dark" disabled={!draft.trim()} onClick={save}>
+          Save draft
+        </Button>
+        <Link href={clientPath(c.id)}>Open client profile</Link>
+      </div>
+      <DraftReview client={c} text={draft} title="Follow-up draft" />
+      {savedDraft && (
+        <p role="status">
+          Draft saved in {firstName(c)}’s referrals. Nothing has been
+          transmitted.
+        </p>
+      )}
+      <div className="dashboard-next">
+        <b>What’s next?</b>
+        <p>
+          Save the draft for follow-up, or mark this item reviewed once you have
+          finished checking it.
+        </p>
+        <Button
+          tone="green"
+          onClick={() => {
+            dispatch({ type: "resolve", clientId: c.id });
+            notify("Marked reviewed. Today’s queues are updated.");
+            onClose();
+            // The reviewed queue row disappears; return keyboard focus to the page.
+            requestAnimationFrame(() => {
+              const heading =
+                document.querySelector<HTMLElement>(".demo-heading h1");
+              if (heading) {
+                heading.tabIndex = -1;
+                heading.focus();
+              }
+            });
+          }}
+        >
+          Mark reviewed
+        </Button>
+        <Link href={clientPath(c.id, "plan")}>
+          Review client’s next steps →
+        </Link>
+      </div>
+    </Dialog>
+  );
+}
+function WorkQueues({
+  onReview,
+  mine = false,
+  plans = false,
+}: {
+  onReview: (id: string) => void;
+  mine?: boolean;
+  plans?: boolean;
+}) {
+  const { state, go } = useDemo();
+  const groups = [
+    {
+      title: "Running",
+      icon: "◷",
+      tone: "running",
+      clients: state.clients.filter((c) => c.run?.status === "working"),
+      detail: "Prepared work awaiting your review",
+    },
+    {
+      title: "Waiting on service",
+      icon: "↗",
+      tone: "waiting",
+      clients: state.clients.filter((c) => c.waiting),
+      detail: "Follow up and keep things moving",
+    },
+    {
+      title: "Overdue",
+      icon: "!",
+      tone: "overdue",
+      clients: state.clients.filter((c) => c.overdue),
+      detail: "Start with these time-sensitive items",
+    },
+  ];
+  const completed = state.clients.reduce(
+    (n, c) => n + c.actions.filter((a) => a.done).length,
+    0,
+  );
+  return (
+    <section className="dashboard-overview" aria-label="Your work at a glance">
+      <div className="dashboard-queue-grid">
+        {groups.map((g) => (
+          <section
+            className={`a2s-sheet dashboard-queue ${g.tone}`}
+            key={g.title}
+          >
+            <header>
+              <span className="dashboard-queue-icon" aria-hidden="true">
+                {g.icon}
+              </span>
+              <h2>{g.title}</h2>
+              <strong>{g.clients.length}</strong>
+            </header>
+            <p>{g.detail}</p>
+            {g.clients.length ? (
+              g.clients.map((c) => (
+                <button
+                  key={c.id}
+                  className="dashboard-queue-person"
+                  onClick={() =>
+                    g.tone === "running"
+                      ? go(clientPath(c.id, "working"))
+                      : onReview(c.id)
+                  }
+                >
+                  <span className="dashboard-avatar">{initials(c.name)}</span>
+                  <span>
+                    <b>{c.name}</b>
+                    <small>
+                      {g.tone === "running" ? "Ready for review" : c.next}
+                    </small>
+                  </span>
+                  <span aria-hidden="true">↗</span>
+                </button>
+              ))
+            ) : (
+              <p className="demo-empty">You’re up to date here.</p>
+            )}
+          </section>
+        ))}
+      </div>
+      <div className="dashboard-impact">
+        <span aria-hidden="true">✓</span>
+        <p>
+          <b>
+            {completed} plan {completed === 1 ? "action" : "actions"} completed
+          </b>
+          <small>In this demo workspace · from saved client plans</small>
+        </p>
+        <Link href="/plans">View plans →</Link>
+      </div>
+      {mine && (
+        <section className="a2s-sheet dashboard-mine">
+          <header>
+            <h2>
+              Mine <small>· {state.clients.length}</small>
+            </h2>
+            <a href="#client-table">Full client list ↓</a>
+          </header>
+          <div>
+            {state.clients.map((c) => (
+              <Link key={c.id} href={clientPath(c.id, plans ? "plan" : "")}>
+                <span className="dashboard-avatar">{initials(c.name)}</span>
+                <span>
+                  <b>{c.name}</b>
+                  <small>{c.focus}</small>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+    </section>
   );
 }
 export function Clients({
@@ -136,7 +362,8 @@ export function Clients({
   const { state, modal, go } = useDemo(),
     params = useSearchParams(),
     filter = params.get("filter") || "Mine",
-    rows = filterClients(state, filter);
+    rows = filterClients(state, filter),
+    [reviewId, setReviewId] = useState<string | null>(null);
   useEffect(() => {
     if (create) modal({ type: "new" });
   }, [create]); // Route-based entry, opens once on mount.
@@ -148,6 +375,10 @@ export function Clients({
       >
         <Button onClick={() => modal({ type: "new" })}>Add a new person</Button>
       </Heading>
+      <WorkQueues onReview={setReviewId} mine plans={plans} />
+      <h2 id="client-table" className="dashboard-table-heading">
+        {plans ? "All client plans" : "Client list"}
+      </h2>
       <div className="demo-filters" aria-label="Client filters">
         {MY_CLIENTS.filters.map((x) => (
           <Button
@@ -210,37 +441,13 @@ export function Clients({
           )}
         </div>
       </Sheet>
-      <div className="demo-two demo-spaced">
-        <Sheet title="Running now">
-          {state.clients
-            .filter((c) => c.run?.status === "working")
-            .map((c) => (
-              <Rail
-                key={c.id}
-                title={`Housing for ${firstName(c)}`}
-                detail="Checking options · waiting for your decision"
-                meta="Open"
-                onClick={() => go(clientPath(c.id, "working"))}
-              />
-            ))}
-          {!state.clients.some((c) => c.run?.status === "working") && (
-            <p className="demo-empty">No tasks running.</p>
-          )}
-        </Sheet>
-        <Sheet title="Waiting on a service">
-          {state.clients
-            .filter((c) => c.waiting)
-            .map((c) => (
-              <Rail
-                key={c.id}
-                title={c.name}
-                detail={`${c.stage} · ${c.next}`}
-                meta="Follow up"
-                onClick={() => go(clientPath(c.id, "referrals"))}
-              />
-            ))}
-        </Sheet>
-      </div>
+      {reviewId && state.clients.find((c) => c.id === reviewId) && (
+        <AttentionReview
+          key={reviewId}
+          c={state.clients.find((c) => c.id === reviewId)!}
+          onClose={() => setReviewId(null)}
+        />
+      )}
     </>
   );
 }
@@ -270,21 +477,26 @@ export function Profile({ c }: { c: Client }) {
           <div>
             <Button
               tone="orange-button"
-              onClick={() => modal({ type: "quick", clientId: c.id })}
+              onClick={() => go(clientPath(c.id, "quick-exit"))}
             >
               Quick exit plan
             </Button>
             <Button tone="dark" onClick={() => go(`${clientPath(c.id)}?ask=1`)}>
               Ask about {firstName(c)}
             </Button>
-          </div>
-          <div>
             <Button
               tone="green"
               onClick={() => modal({ type: "note", clientId: c.id })}
             >
               New case note
             </Button>
+          </div>
+          <div>
+            <TextButton
+              onClick={() => modal({ type: "edit-client", clientId: c.id })}
+            >
+              Edit information
+            </TextButton>
             <TextButton
               onClick={() => modal({ type: "letter", clientId: c.id })}
             >
@@ -439,7 +651,7 @@ function ProfileAsk({ c }: { c: Client }) {
   return params.get("ask") ? <Composer client={c} expanded /> : null;
 }
 export function Plan({ c }: { c: Client }) {
-  const { dispatch, modal, notify } = useDemo(),
+  const { dispatch, modal, notify, go } = useDemo(),
     [suggestion, setSuggestion] = useState(""),
     [action, setAction] = useState("");
   const addAction = (title: string, id?: string) => {
@@ -556,18 +768,22 @@ export function Plan({ c }: { c: Client }) {
         <Sheet title="Actions">
           <div className="demo-actions spread">
             <small>Quick exit</small>
-            <TextButton
-              onClick={() => modal({ type: "quick", clientId: c.id })}
-            >
+            <TextButton onClick={() => go(clientPath(c.id, "quick-exit"))}>
               Open the full plan
             </TextButton>
           </div>
           {c.quick.slice(0, 3).map((x) => (
-            <div className="demo-plan-row" key={x.id}>
-              <Asset name={x.done ? "check" : "ring"} size={16} />
+            <label className="demo-plan-row" key={x.id}>
+              <input
+                type="checkbox"
+                checked={!!x.done}
+                onChange={() =>
+                  dispatch({ type: "toggle-quick", clientId: c.id, id: x.id })
+                }
+              />
               <b>{x.title}</b>
               <small>{x.detail}</small>
-            </div>
+            </label>
           ))}
           {Array.from(new Set(c.actions.map((a) => a.group || "Actions"))).map(
             (group) => (
@@ -710,7 +926,8 @@ export function Files({ c, kind }: { c?: Client; kind: "letters" | "notes" }) {
 }
 export function Referrals({ c }: { c?: Client }) {
   const { state, dispatch, modal, go, notify } = useDemo(),
-    clients = c ? [c] : state.clients.filter((x) => x.waiting || x.overdue);
+    clients = c ? [c] : state.clients.filter((x) => x.waiting || x.overdue),
+    [reviewId, setReviewId] = useState<string | null>(null);
   return (
     <>
       <Heading
@@ -730,10 +947,7 @@ export function Referrals({ c }: { c?: Client }) {
             </p>
             {client.callback && <p>Callback simulated: {client.callback}</p>}
             <div className="demo-actions">
-              <Button
-                tone="dark"
-                onClick={() => modal({ type: "letter", clientId: client.id })}
-              >
+              <Button tone="dark" onClick={() => setReviewId(client.id)}>
                 Draft follow-up
               </Button>
               <Button
@@ -748,6 +962,22 @@ export function Referrals({ c }: { c?: Client }) {
                 Find shelters
               </TextButton>
             </div>
+            {client.files.some((file) => file.kind === "message") && (
+              <p className="demo-label">Saved drafts and messages</p>
+            )}
+            {client.files
+              .filter((file) => file.kind === "message")
+              .map((file) => (
+                <Rail
+                  key={file.id}
+                  title={file.title}
+                  detail={file.date}
+                  meta="Open"
+                  onClick={() =>
+                    modal({ type: "file", clientId: client.id, file })
+                  }
+                />
+              ))}
             <p className="demo-label">History</p>
             {client.events.map((x, i) => (
               <p className="demo-history" key={i}>
@@ -762,6 +992,13 @@ export function Referrals({ c }: { c?: Client }) {
         <Sheet>
           <p>No follow-ups waiting. You’re up to date.</p>
         </Sheet>
+      )}
+      {reviewId && state.clients.find((client) => client.id === reviewId) && (
+        <AttentionReview
+          key={reviewId}
+          c={state.clients.find((client) => client.id === reviewId)!}
+          onClose={() => setReviewId(null)}
+        />
       )}
     </>
   );

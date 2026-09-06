@@ -10,6 +10,7 @@ import type {
 } from "../../lib/demo/store";
 export type ModalState = {
   type:
+    | "edit-client"
     | "quick"
     | "note"
     | "letter"

@@ -24,6 +24,8 @@ import {
 } from "./screens";
 import { Shelters, Working, Done } from "./workflow";
 import { Modals, Spotlight } from "./interactions";
+import { QuickExitPage } from "./QuickExitPage";
+import { AlertPanel } from "./AlertPanel";
 
 export function DemoApp() {
   const router = useRouter(),
@@ -149,7 +151,7 @@ export function DemoApp() {
         content = <Files c={client} kind={section} />;
         break;
       case "quick-exit":
-        content = <Profile c={client} />;
+        content = <QuickExitPage c={client} />;
         break;
       default:
         content = (
@@ -258,32 +260,7 @@ export function DemoApp() {
                   Alerts{" "}
                   {unread > 0 && <span className="a2s-badge">{unread}</span>}
                 </button>
-                {menu === "alerts" && (
-                  <div className="a2s-pop">
-                    <h3>Alerts · {unread}</h3>
-                    <div className="demo-alert-list">
-                      {state.alerts
-                        .filter((a) => !a.read)
-                        .map((a) => (
-                          <button
-                            key={a.id}
-                            className="demo-rail"
-                            onClick={() => {
-                              dispatchBase({ type: "read", id: a.id });
-                              go(clientPath(a.clientId, a.section));
-                            }}
-                          >
-                            {a.title}
-                            <small>Open</small>
-                          </button>
-                        ))}
-                      {!unread && <p>You’re all caught up.</p>}
-                    </div>
-                    <TextButton onClick={() => dispatchBase({ type: "read" })}>
-                      Mark all read
-                    </TextButton>
-                  </div>
-                )}
+                {menu === "alerts" && <AlertPanel />}
               </span>
               <span className="a2s-pop-wrap">
                 <button
@@ -342,12 +319,6 @@ export function DemoApp() {
                         ? "page"
                         : undefined
                     }
-                    onClick={(e) => {
-                      if (key === "quick-exit") {
-                        e.preventDefault();
-                        setModal({ type: "quick", clientId: client.id });
-                      }
-                    }}
                   >
                     <span
                       className={`demo-dot ${["Plan", "Referrals"].includes(label) ? "orange" : ""}`}
@@ -358,7 +329,7 @@ export function DemoApp() {
               </nav>
               <TextButton
                 className="orange"
-                onClick={() => setModal({ type: "quick", clientId: client.id })}
+                onClick={() => go(clientPath(client.id, "quick-exit"))}
               >
                 Quick exit plan
               </TextButton>

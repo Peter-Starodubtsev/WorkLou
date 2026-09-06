@@ -41,6 +41,7 @@ export type Client = {
   };
   best?: string;
   callback?: string;
+  callbackAt?: string;
   dismissedSafety?: boolean;
 };
 export type Shelter = {
@@ -377,6 +378,13 @@ export function eligibility(s: Shelter, query: string) {
 }
 export type Action =
   | { type: "add-client"; client: Client }
+  | {
+      type: "edit-client";
+      clientId: string;
+      changes: Pick<Client, "name" | "focus" | "summary" | "chips">;
+    }
+  | { type: "toggle-quick"; clientId: string; id: string }
+  | { type: "edit-quick"; clientId: string; id: string; detail: string }
   | { type: "file"; clientId: string; file: RecordFile }
   | { type: "run"; clientId: string; ask: string }
   | {
@@ -388,7 +396,7 @@ export type Action =
       date: string;
     }
   | { type: "choose"; clientId: string; shelterId: string }
-  | { type: "callback"; clientId: string; date: string }
+  | { type: "callback"; clientId: string; date: string; startsAt?: string }
   | { type: "action"; clientId: string; item: Item }
   | { type: "toggle-action"; clientId: string; id: string }
   | { type: "suggestion"; clientId: string; name: string }
@@ -426,6 +434,36 @@ export function reducer(state: State, a: Action): State {
   const clients = state.clients.map((c) => {
     if (c.id !== a.clientId) return c;
     switch (a.type) {
+      case "edit-client":
+        if (!a.changes.name.trim() || !a.changes.focus.trim()) return c;
+        return {
+          ...c,
+          ...a.changes,
+          name: a.changes.name.trim(),
+          focus: a.changes.focus.trim(),
+          events: [
+            "Client information updated · reviewed by worker",
+            ...c.events,
+          ],
+        };
+      case "toggle-quick":
+        return {
+          ...c,
+          quick: c.quick.map((item) =>
+            item.id === a.id ? { ...item, done: !item.done } : item,
+          ),
+        };
+      case "edit-quick":
+        return {
+          ...c,
+          quick: c.quick.map((item) =>
+            item.id === a.id
+              ? { ...item, detail: a.detail.trim(), done: false }
+              : item,
+          ),
+          events: ["Quick exit details updated · review together", ...c.events],
+        };
+
       case "file":
         return {
           ...c,
@@ -491,6 +529,7 @@ export function reducer(state: State, a: Action): State {
         return {
           ...c,
           callback: a.date,
+          callbackAt: a.startsAt,
           overdue: false,
           attention: false,
           next: a.date,
@@ -549,7 +588,11 @@ export function reducer(state: State, a: Action): State {
             a.type === "finish"
               ? "done"
               : a.type === "file"
-                ? "notes"
+                ? a.file.kind === "letter"
+                  ? "letters"
+                  : a.file.kind === "message"
+                    ? "referrals"
+                    : "notes"
                 : a.type === "review"
                   ? "plan"
                   : "referrals",

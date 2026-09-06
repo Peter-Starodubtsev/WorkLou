@@ -1,0 +1,61 @@
+.quick-exit-items {
+  margin-top: 18px;
+}
+.quick-exit-item {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.quick-exit-item:last-child {
+  border-bottom: 0;
+}
+.quick-exit-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.quick-exit-item-head label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.quick-exit-item-head b {
+  font-weight: 500;
+}
+.quick-exit-item-head input {
+  width: 17px;
+  height: 17px;
+  accent-color: #269969;
+}
+.quick-exit-item-head > span {
+  font-size: 12px;
+}
+.quick-exit-item-body {
+  display: flex;
+  gap: 18px;
+  padding-left: 29px;
+  align-items: baseline;
+}
+.quick-exit-item-body p {
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+}
+.quick-exit-item-body button {
+  font-size: 13px;
+}
+@media print {
+  body:has(.quick-exit-page) .demo-shell,
+  body:has(.quick-exit-page) .demo-context,
+  body:has(.quick-exit-page) aside,
+  body:has(.quick-exit-page) button {
+    display: none !important;
+  }
+  body:has(.quick-exit-page) .a2s-grid {
+    display: block;
+  }
+  body:has(.quick-exit-page) .a2s-sheet {
+    background: white;
+    box-shadow: none;
+  }
+}

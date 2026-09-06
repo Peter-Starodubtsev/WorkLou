@@ -1,0 +1,63 @@
+.demo .demo-alert-panel {
+  width: 380px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, #fffffff2, #eef4f4ed);
+}
+.demo-alert-panel header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 2px 0 10px;
+}
+.demo-alert-panel header h3 {
+  margin: 0;
+}
+.demo .demo-alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  font: inherit;
+  border-radius: 0;
+}
+.demo-alert-item:hover {
+  background: #ffffff70;
+}
+.demo-alert-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #279b75;
+  flex-shrink: 0;
+}
+.demo-alert-mark.urgent {
+  background: #d55719;
+}
+.demo-alert-copy {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+.demo-alert-copy b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.demo-alert-open {
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.demo-alert-panel footer {
+  padding-top: 14px;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .demo .demo-alert-panel {
+    width: min(380px, 85vw);
+  }
+}
