@@ -17,6 +17,14 @@ Append-only. New entries at the TOP (below this header block). Never edit or del
 
 ---
 
+## 2026-09-06 — Alerts stacking fix
+- Branch: `codex/figma-claude-review`; fork-only follow-up.
+- Changes: raise the demo header stacking context above the main content and client context bar, so the Alerts popover is not painted behind later page content.
+- DB changes: none.
+- Tests run: CSS stacking-context inspection, whitespace check and local client page HTTP 200.
+- Result: targeted CSS fix; existing popover appearance and behavior retained.
+- Next phase: open Alerts on Today or a client page to review; no main merge or deployment.
+
 ## 2026-09-06 — Compact action icons
 - Branch: `codex/figma-claude-review`; fork-only follow-up.
 - Changes: shared 16px outline icons on add-person, notes, reviews, suggestions, plans, services, profile actions and calendar/print controls. No padding around the SVG; 5px icon/text gap and reduced 8px × 12px padding on these buttons. Existing colours and glossy surfaces retained.

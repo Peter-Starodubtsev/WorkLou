@@ -13,6 +13,10 @@
   position: relative;
   z-index: 1;
 }
+/* Keep header popovers above the main and client-context stacking contexts. */
+.demo-shell {
+  z-index: 40;
+}
 .demo-backdrop {
   position: absolute;
   inset: 0;
